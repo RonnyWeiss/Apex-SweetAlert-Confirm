@@ -19,9 +19,9 @@
         "url": "https://github.com/RonnyWeiss/Apex-SweetAlert-Confirm.git"
     },
     "oracle": {
-        "versions": ["11.2.0.1", "12.1.0.1", "12.2.0.1"],
+        "versions": ["11.2.0.1", "12.1.0.1", "12.2.0.1", "18.4.0.0"],
         "apex": {
-            "versions": ["5.1.1", "5.1.2", "5.1.3", "5.1.4"],
+            "versions": ["5.1.4", "18.1.0.00.45", "18.2.0.00.12"],
             "plugin": {
                 "internalName": "APEX.SWEET.ALERT",
                 "type": "dynamic action",
