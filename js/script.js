@@ -1,9 +1,6 @@
 var sweetAlert = (function () {
-    /*
-    https://sweetalert2.github.io/#input-select
-    */
     "use strict";
-    var scriptVersion = "1.3";
+    var scriptVersion = "1.4";
     var util = {
         version: "1.0.5",
         isAPEX: function () {
@@ -78,38 +75,59 @@ var sweetAlert = (function () {
                 console.error(finalConfig);
             }
             return finalConfig;
+        },
+        getItemValue: function (itemName) {
+            if (!itemName) {
+                return "";
+            }
+
+            if (util.isAPEX()) {
+                if (apex.item(itemName) && apex.item(itemName).node != false) {
+                    return apex.item(itemName).getValue();
+                } else {
+                    console.error('Please choose a get item. Because the value could not be get from item(' + itemName + ')');
+                }
+            } else {
+                console.error("Error while try to call apex.item" + e);
+            }
         }
     };
 
     return {
-        initialize: function (pThis, udConfigJSON, requiredValue, escapeRequired) {
+        initialize: function (pThis, configItem, udConfigJSON, requiredValue, requiredValueItem, escapeRequired) {
+
             var stdConfigJSON = {
-                type: "warning",
-                title: "Confirm",
-                text: "If you want to continue please enter",
-                showCancelButton: true,
-                input: "text",
-                inputAutoTrim: true,
-                inputPlaceholder: "",
-                requiredValue: "12345",
-                inputRequiredInfo: "Required",
-                inputNotDesiredValue: "Wrong Input",
-                confirmButtonText: "Submit",
-                confirmButtonIcon: "fa-check",
-                cancelButtonText: "Cancel",
-                cancelButtonIcon: "fa-close",
-                confirmButtonClass: "t-Button t-Button--icon t-Button--iconRight t-Button--hot",
-                cancelButtonClass: "t-Button t-Button--icon t-Button--iconRight",
-                reverseButtons: true,
-                buttonsStyling: false,
-                focusCancel: true
+                "type": "warning",
+                "title": "Confirm",
+                "text": "If you want to continue please enter %0",
+                "showCancelButton": true,
+                "input": "text",
+                "inputAutoTrim": true,
+                "inputPlaceholder": "",
+                "requiredValue": "12345",
+                "requiredValueHTML": "12345",
+                "inputRequiredInfo": "Required",
+                "inputNotDesiredValue": "Wrong Input",
+                "confirmButtonText": "Submit",
+                "confirmButtonIcon": "fa-check",
+                "cancelButtonText": "Cancel",
+                "cancelButtonIcon": "fa-close",
+                "confirmButtonClass": "t-Button t-Button--icon t-Button--iconRight t-Button--hot",
+                "cancelButtonClass": "t-Button t-Button--icon t-Button--iconRight",
+                "reverseButtons": true,
+                "buttonsStyling": false,
+                "focusCancel": true,
+                "readComparisonValuefromClient": false
             };
+
             var configJSON = {};
-            configJSON = util.jsonSaveExtend(stdConfigJSON, udConfigJSON);
+            var srcConfigJSON = (configItem) ? util.getItemValue(configItem).toString() : udConfigJSON;
+            configJSON = util.jsonSaveExtend(stdConfigJSON, srcConfigJSON);
 
             if (requiredValue) {
-                configJSON.requiredValue = requiredValue;
-                configJSON.requiredValueHTML = requiredValue;
+                var val = (configJSON.readComparisonValuefromClient) ? util.getItemValue(requiredValueItem) : requiredValue;
+                configJSON.requiredValue = val;
+                configJSON.requiredValueHTML = val;
             }
 
             if (escapeRequired !== false) {
@@ -123,6 +141,8 @@ var sweetAlert = (function () {
                 configJSON.cancelButtonText = util.escapeHTML(configJSON.cancelButtonText);
                 configJSON.cancelButtonIcon = util.escapeHTML(configJSON.cancelButtonIcon);
             }
+
+            util.debug.info(configJSON);
 
             swal({
                 title: configJSON.title,
@@ -161,7 +181,6 @@ var sweetAlert = (function () {
                     }
                 }
             });
-
         }
     }
 })();
