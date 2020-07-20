@@ -1,8 +1,25 @@
 var sweetAlert = (function () {
     "use strict";
-    var scriptVersion = "1.4";
     var util = {
-        version: "1.0.5",
+        /**********************************************************************************
+         ** required functions 
+         *********************************************************************************/
+        featureInfo: {
+            name: "sweetAlert",
+            info: {
+                scriptVersion: "1.5",
+                utilVersion: "1.3.4",
+                url: "https://github.com/RonnyWeiss",
+                license: "MIT"
+            }
+        },
+        isDefinedAndNotNull: function (pInput) {
+            if (typeof pInput !== "undefined" && pInput !== null && pInput != "") {
+                return true;
+            } else {
+                return false;
+            }
+        },
         isAPEX: function () {
             if (typeof (apex) !== 'undefined') {
                 return true;
@@ -10,20 +27,51 @@ var sweetAlert = (function () {
                 return false;
             }
         },
+        varType: function (pObj) {
+            if (typeof pObj === "object") {
+                var arrayConstructor = [].constructor;
+                var objectConstructor = ({}).constructor;
+                if (pObj.constructor === arrayConstructor) {
+                    return "array";
+                }
+                if (pObj.constructor === objectConstructor) {
+                    return "json";
+                }
+            } else {
+                return typeof pObj;
+            }
+        },
         debug: {
-            info: function (str) {
+            info: function () {
                 if (util.isAPEX()) {
-                    apex.debug.info(str);
+                    var i = 0;
+                    var arr = [];
+                    for (var prop in arguments) {
+                        arr[i] = arguments[prop];
+                        i++;
+                    }
+                    arr.push(util.featureInfo);
+                    apex.debug.info.apply(this, arr);
                 }
             },
-            error: function (str) {
+            error: function () {
+                var i = 0;
+                var arr = [];
+                for (var prop in arguments) {
+                    arr[i] = arguments[prop];
+                    i++;
+                }
+                arr.push(util.featureInfo);
                 if (util.isAPEX()) {
-                    apex.debug.error(str);
+                    apex.debug.error.apply(this, arr);
                 } else {
-                    console.error(str);
+                    console.error.apply(this, arr);
                 }
             }
         },
+        /**********************************************************************************
+         ** optinal functions 
+         *********************************************************************************/
         escapeHTML: function (str) {
             if (str === null) {
                 return null;
@@ -53,26 +101,31 @@ var sweetAlert = (function () {
         },
         jsonSaveExtend: function (srcConfig, targetConfig) {
             var finalConfig = {};
+            var tmpJSON = {};
             /* try to parse config json when string or just set */
             if (typeof targetConfig === 'string') {
                 try {
-                    targetConfig = JSON.parse(targetConfig);
+                    tmpJSON = JSON.parse(targetConfig);
                 } catch (e) {
-                    console.error("Error while try to parse targetConfig. Please check your Config JSON. Standard Config will be used.");
-                    console.error(e);
-                    console.error(targetConfig);
+                    util.debug.error({
+                        "msg": "Error while try to parse targetConfig. Please check your Config JSON. Standard Config will be used.",
+                        "err": e,
+                        "targetConfig": targetConfig
+                    });
                 }
             } else {
-                finalConfig = targetConfig;
+                tmpJSON = $.extend(true, {}, targetConfig);
             }
             /* try to merge with standard if any attribute is missing */
             try {
-                finalConfig = $.extend(true, srcConfig, targetConfig);
+                finalConfig = $.extend(true, {}, srcConfig, tmpJSON);
             } catch (e) {
-                console.error('Error while try to merge 2 JSONs into standard JSON if any attribute is missing. Please check your Config JSON. Standard Config will be used.');
-                console.error(e);
-                finalConfig = srcConfig;
-                console.error(finalConfig);
+                finalConfig = $.extend(true, {}, srcConfig);
+                util.debug.error({
+                    "msg": "Error while try to merge 2 JSONs into standard JSON if any attribute is missing. Please check your Config JSON. Standard Config will be used.",
+                    "err": e,
+                    "finalConfig": finalConfig
+                });
             }
             return finalConfig;
         },
@@ -85,16 +138,52 @@ var sweetAlert = (function () {
                 if (apex.item(itemName) && apex.item(itemName).node != false) {
                     return apex.item(itemName).getValue();
                 } else {
-                    console.error('Please choose a get item. Because the value could not be get from item(' + itemName + ')');
+                    util.debug.error("Please choose a get item. Because the value could not be get from item(" + itemName + ")");
                 }
             } else {
-                console.error("Error while try to call apex.item" + e);
+                util.debug.error("Error while try to call apex.item");
+            }
+        },
+        cutString: function (text, textLength) {
+            try {
+                if (textLength < 0) return text;
+                else {
+                    return (text.length > textLength) ?
+                        text.substring(0, textLength - 3) + "..." :
+                        text
+                }
+            } catch (e) {
+                return text;
+            }
+        },
+        copy2Clipboard: function (pElement, pText, pShowSuccessMsg) {
+            var $temp = $("<input>");
+            $("body").append($temp);
+            var str = $(pElement).text() || $(pElement).val();
+            $temp.val(str).select();
+            document.execCommand("copy");
+            $temp.remove();
+
+            if (pShowSuccessMsg && util.isDefinedAndNotNull(str) && util.isAPEX()) {
+                apex.message.showPageSuccess(pText.replace("%0", pText));
+                setTimeout(function () {
+                    apex.message.hidePageSuccess();
+                }, 1500);
             }
         }
     };
 
     return {
         initialize: function (pThis, configItem, udConfigJSON, requiredValue, requiredValueItem, escapeRequired) {
+
+            util.debug.info({
+                "pThis": pThis,
+                "configItem": configItem,
+                "udConfigJSON": udConfigJSON,
+                "requiredValue": requiredValue,
+                "requiredValueItem": requiredValueItem,
+                "escapeRequired": escapeRequired
+            });
 
             var stdConfigJSON = {
                 "type": "warning",
@@ -142,11 +231,25 @@ var sweetAlert = (function () {
                 configJSON.cancelButtonIcon = util.escapeHTML(configJSON.cancelButtonIcon);
             }
 
-            util.debug.info(configJSON);
+            util.debug.info({
+                "module": "initialize",
+                "configJSON": configJSON
+            });
 
+            var b = $("<b></b>");
+            b.addClass("swal2-c-text");
+            b.html(configJSON.requiredValueHTML);
+
+            var bStr = $("<div></div>").append(b.clone()).html();
+
+            var span = $("<span></span>");
+            span.addClass("t-Region-body");
+            span.html(configJSON.text.replace("%0", bStr));
+
+            var htmlStr = $("<div></div>").append(span.clone()).html();
             swal({
                 title: configJSON.title,
-                html: '<span class="t-Region-body">' + configJSON.text.replace("%0", ' <b style="font-weight: bold;">' + configJSON.requiredValueHTML + '</b>') + '</span>',
+                html: htmlStr,
                 type: configJSON.type,
                 confirmButtonText: configJSON.confirmButtonText + ' <i class="fa ' + configJSON.confirmButtonIcon + '"></i>',
                 cancelButtonText: configJSON.cancelButtonText + ' <i class="fa ' + configJSON.cancelButtonIcon + '"></i>',
@@ -180,6 +283,15 @@ var sweetAlert = (function () {
                         apex.da.resume(pThis.resumeCallback, true);
                     }
                 }
+            });
+
+            $(".swal2-c-text").on("click", function () {
+                var mCpSpan = $("<span></span>");
+                var cpSpan = $("<span></span>");
+                cpSpan.addClass("fa fa-copy");
+                mCpSpan.append(cpSpan);
+                mCpSpan.append(" " + util.cutString(configJSON.requiredValueHTML, 15));
+                util.copy2Clipboard(b, $("<div></div>").append(mCpSpan.clone()).html());
             });
         }
     }

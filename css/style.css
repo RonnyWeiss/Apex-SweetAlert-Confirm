@@ -29,3 +29,9 @@
 .swal2-popup .swal2-content {
     font-weight: normal !important
 }
+
+.swal2-c-text {
+    font-weight: bold;
+    white-space: pre;
+    cursor: copy;
+}
