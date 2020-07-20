@@ -156,20 +156,13 @@ var sweetAlert = (function () {
                 return text;
             }
         },
-        copy2Clipboard: function (pElement, pText, pShowSuccessMsg) {
+        copy2Clipboard: function (pElement) {
             var $temp = $("<input>");
             $("body").append($temp);
             var str = $(pElement).text() || $(pElement).val();
             $temp.val(str).select();
             document.execCommand("copy");
             $temp.remove();
-
-            if (pShowSuccessMsg && util.isDefinedAndNotNull(str) && util.isAPEX()) {
-                apex.message.showPageSuccess(pText.replace("%0", pText));
-                setTimeout(function () {
-                    apex.message.hidePageSuccess();
-                }, 1500);
-            }
         }
     };
 
@@ -291,7 +284,7 @@ var sweetAlert = (function () {
                 cpSpan.addClass("fa fa-copy");
                 mCpSpan.append(cpSpan);
                 mCpSpan.append(" " + util.cutString(configJSON.requiredValueHTML, 15));
-                util.copy2Clipboard(b, $("<div></div>").append(mCpSpan.clone()).html());
+                util.copy2Clipboard(b);
             });
         }
     }
