@@ -32,6 +32,6 @@
 
 .swal2-c-text {
     font-weight: bold;
-    white-space: pre;
+    white-space: pre-wrap;
     cursor: copy;
 }
