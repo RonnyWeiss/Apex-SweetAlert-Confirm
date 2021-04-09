@@ -4,7 +4,7 @@
     "brackets-minifier.css-project-minify": true,
     "brackets-minifier.js-custom-path": "build",
     "brackets-minifier.css-custom-path": "build",
-    "brackets-minifier.project-exclude": "css/font-apex.css",
+    "brackets-minifier.project-exclude": "",
     "brackets-minifier.concat-js-filename": "sweetalert.pkgd",
     "brackets-minifier.concat-css-filename": "sweetalert.pkgd",
     "brackets-minifier.uglifyjs-options": "{}",
